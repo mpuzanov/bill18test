@@ -1,0 +1,32 @@
+<html>
+
+<head>
+    <title>Проверка веб-сайтов</title>
+</head>
+
+<body>
+    <h1>История проверки сайтов</h1>
+    <div>
+        <table border="1">
+            <tr>
+                <th>Описание теста</th>
+                <th>Сайт</th>
+                <th>Параметры</th>
+                <th>Время</th>
+                <th>Статус возврата</th>
+            </tr>
+            {{range . }}
+            <tr>
+                <td>{{.Name}}</td>
+                <td>{{.Site}}</td>
+                <td>{{.GetParamsJSON}}</td>
+                <td>{{.Time}}</td>
+                <td>{{.Status}}</td>
+            </tr>
+            {{end}}
+        </table>
+
+    </div>
+</body>
+
+</html>

@@ -4,17 +4,12 @@ import (
 	"io/ioutil"
 
 	"github.com/go-yaml/yaml"
+	"github.com/mpuzanov/bill18test/models"
 )
 
 var (
 	configModtime int64
 )
-
-// HTTPBasicAuthenticator Структура для доступа к сайту
-type HTTPBasicAuthenticator struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-}
 
 //URLParam ...
 type URLParam struct {
@@ -25,27 +20,22 @@ type URLParam struct {
 
 // UrlsTestConfig ...
 type UrlsTestConfig struct {
-	Hostapi     string     `yaml:"hostapi"`
-	HTTProtocol string     `yaml:"http_protocol,omitempty"`
-	URLParams   []URLParam `yaml:"url_params,omitempty"`
-	// URLParams struct {
-	// 	Name   string            `yaml:"name,omitempty"`
-	// 	Path   string            `yaml:"path,omitempty"`
-	// 	Params map[string]string `yaml:"params,omitempty"`
-	// }
+	Hostapi     string                        `yaml:"hostapi"`
+	HTTProtocol string                        `yaml:"http_protocol,omitempty"`
+	URLParams   []URLParam                    `yaml:"url_params,omitempty"`
+	BasicAuth   models.HTTPBasicAuthenticator `yaml:"HTTPBasicAuthenticator,omitempty"`
 }
 
 // Config - структура для считывания конфигурационного файла
 type Config struct {
-	LogLevel       string                 `yaml:"log_level"`
-	Timeout        int                    `yaml:"timeout"`
-	Port           int                    `yaml:"port"`
-	HistLength     int                    `yaml:"histLength"`
-	ToEmail        string                 `yaml:"toEmail"`
-	UrlsTest       []UrlsTestConfig       `yaml:"urlTest"`
-	ErrorSendEmail bool                   `yaml:"errorSendEmail"`
-	SettingsSMTP   EmailCredentials       `yaml:"settingsSMTP"`
-	BasicAuth      HTTPBasicAuthenticator `yaml:"HTTPBasicAuthenticator"`
+	LogLevel       string           `yaml:"log_level"`
+	Timeout        int              `yaml:"timeout"`
+	Port           int              `yaml:"port"`
+	HistLength     int              `yaml:"histLength"`
+	ToEmail        string           `yaml:"toEmail"`
+	UrlsTest       []UrlsTestConfig `yaml:"urlTest"`
+	ErrorSendEmail bool             `yaml:"errorSendEmail"`
+	SettingsSMTP   EmailCredentials `yaml:"settingsSMTP"`
 }
 
 // readConfig Читаем конфигурацию из файла

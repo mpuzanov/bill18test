@@ -5,13 +5,20 @@ import (
 	"fmt"
 )
 
+// HTTPBasicAuthenticator Структура для доступа к сайту
+type HTTPBasicAuthenticator struct {
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
+}
+
 //UrlsTest структура для тестирования сайтов
 type UrlsTest struct {
-	Name   string            `yaml:"name"`
-	Site   string            `yaml:"site,omitempty"`
-	Path   string            `yaml:"path,omitempty"`
-	Params map[string]string `yaml:"params,omitempty"`
-	URI    string            `yaml:"uri,omitempty"`
+	Name      string                 `yaml:"name"`
+	Site      string                 `yaml:"site,omitempty"`
+	Path      string                 `yaml:"path,omitempty"`
+	Params    map[string]string      `yaml:"params,omitempty"`
+	URI       string                 `yaml:"uri,omitempty"`
+	BasicAuth HTTPBasicAuthenticator `yaml:"HTTPBasicAuthenticator,omitempty"`
 }
 
 //URLResponseHistory Результаты проверки статуса сайта

@@ -18,7 +18,7 @@ type EmailCredentials struct {
 }
 
 //SendEmail Отправка почтовых сообщений
-func SendEmail(addTo, subject, bodyMessage, attachFiles string) {
+func SendEmail(addFrom, addTo, subject, bodyMessage, attachFiles string) {
 
 	authCreds := EmailCredentials{
 		Username: cfg.SettingsSMTP.Username,
@@ -29,7 +29,7 @@ func SendEmail(addTo, subject, bodyMessage, attachFiles string) {
 
 	// compose the message
 	m := email.NewMessage(subject, bodyMessage)
-	m.From = mail.Address{Name: "Puzanov", Address: cfg.SettingsSMTP.Username}
+	m.From = mail.Address{Name: addFrom, Address: cfg.SettingsSMTP.Username}
 	m.To = []string{addTo}
 	m.Subject = subject
 

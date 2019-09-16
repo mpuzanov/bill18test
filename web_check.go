@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"flag"
 	"fmt"
 	"html/template"
 	"path"
@@ -17,9 +18,8 @@ import (
 )
 
 const (
-	configFileName = "configs/config.yaml"
-	statfile       = "web_check.log"
-	logFileName    = "check.log"
+	statfile    = "web_check.log"
+	logFileName = "check.log"
 )
 
 var (
@@ -30,17 +30,28 @@ var (
 	logger       *log.Logger
 )
 
-//var tmpl := template.Must(template.ParseFiles("templates/history.html"))
+//var impl = template.Must(template.ParseFiles("templates/history.html")) // для разбора шаблона 1 раз при запуске сервиса
+
+var configFileName = flag.String("conf", "configs/config.yaml", "config filename")
 
 func main() {
+	flag.Parse()
+
 	logFile, _ := os.OpenFile(logFileName, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
 	defer logFile.Close()
 	//logger = log.New(os.Stdout, "info ", log.LstdFlags|log.Lshortfile)
 	logger = log.New(logFile, "info ", log.LstdFlags|log.Lshortfile)
 
+	if *configFileName == "" {
+		log.Fatal("Конфиг-файл не задан!")
+	}
+	if _, err := os.Stat(*configFileName); os.IsNotExist(err) {
+		log.Fatalf("Конфиг-файл %s не найден!", *configFileName)
+	}
+
 	//загружаем конфиг (далее он периодически проверяется в процедуре checkLoop)
 	var err error
-	cfg, err = reloadConfig(configFileName)
+	cfg, err = reloadConfig(*configFileName)
 	checkErr(err)
 	//logger.Printf("%#v", cfg)
 
@@ -53,11 +64,11 @@ func main() {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	// Выдает историю проверок в браузер
-	tmpl := template.Must(template.ParseFiles("templates/history.html"))
-	tmpl.Execute(w, urlsResponse)
+	impl := template.Must(template.ParseFiles("templates/history.html"))
+	impl.Execute(w, urlsResponse)
 }
 
-func saveHstory(s models.URLResponseHistory) {
+func saveHistory(s models.URLResponseHistory) {
 	// добавляет запись в массив с историей проверок
 	urlsResponse = append(urlsResponse, s)
 	if len(urlsResponse) > cfg.HistLength {
@@ -65,36 +76,36 @@ func saveHstory(s models.URLResponseHistory) {
 	}
 }
 
-// checkLoop фунция проверки сайтов по заданному списку
+// checkLoop функция проверки сайтов по заданному списку
 func checkLoop() {
-	var textToSendMail string
+	var textToSendMail = "Ошибки тестирования сайтов: \n\n"
 	for {
 		isSendMail := false
 		for _, url := range urlsTest {
 			res, objResponse := runCheck(url)
 			msg := fmt.Sprintf("%s; %s; %v; %s; %s", objResponse.Name, objResponse.Site, objResponse.GetParamsJSON(), objResponse.Time, objResponse.Status)
 			logToFile(msg)
-			saveHstory(objResponse)
+			saveHistory(objResponse)
 			if res != true {
 				if isSendMail == false {
 					isSendMail = true
 				}
-				textToSendMail += msg // добавляем в текст письма при ошибке
+				textToSendMail += msg + "\n" // добавляем в текст письма при ошибке
 			}
 		}
 		if isSendMail == true && cfg.ErrorSendEmail == true {
 			log.Printf("Отправляем на адрес: %s сообщение: %s\n", cfg.ToEmail, textToSendMail)
-			SendEmail(cfg.ToEmail, "Ошибка проверки сайтов", textToSendMail, "")
+			SendEmail("bill18test", cfg.ToEmail, "Ошибка проверки сайтов", textToSendMail, "")
 		}
 
-		_, err := reloadConfig(configFileName) // Считываем конфиг (вдруг добавили ещё сайты для проверки)
+		_, err := reloadConfig(*configFileName) // Считываем конфиг (вдруг добавили ещё сайты для проверки)
 		checkErr(err)
 
 		time.Sleep(time.Duration(cfg.Timeout) * time.Minute) // Ждём заданное количество времени
 	}
 }
 
-// logToFile Сохраняем строку логирования в файл
+// logToFile Сохраняем строку в файл
 func logToFile(s string) {
 	logger.Printf("Сохраняем строку <%s> в файл %s\n", s, statfile)
 	f, err := os.OpenFile(statfile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
@@ -142,13 +153,15 @@ func reloadConfig(configName string) (cfg *Config, err error) {
 				u.Path = p.Path
 				u.Site = path.Join(url.HTTProtocol, url.Hostapi, p.Path)
 				u.URI = gerURLAndParams(url.HTTProtocol, url.Hostapi, p.Path, p.Params)
+				u.BasicAuth.Username = url.BasicAuth.Username
+				u.BasicAuth.Password = url.BasicAuth.Password
 				urlsTest = append(urlsTest, u)
 			}
 		}
 		//fmt.Println(urlsTest)
 		return cfg, nil
 	}
-	logger.Println("Файл неизменился")
+	logger.Println("Файл не изменился")
 
 	return nil, nil
 }
@@ -163,8 +176,9 @@ func runCheck(url models.UrlsTest) (bool, models.URLResponseHistory) {
 	logger.Println("Адрес с учётом параметров: ", uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
-
-	req.Header.Add("Authorization", "Basic "+basicAuth(cfg.BasicAuth.Username, cfg.BasicAuth.Password))
+	if url.BasicAuth.Username != "" {
+		req.Header.Add("Authorization", "Basic "+basicAuth(url.BasicAuth.Username, url.BasicAuth.Password))
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {

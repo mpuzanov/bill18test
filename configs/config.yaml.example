@@ -18,15 +18,14 @@ settingsSMTP:
   server  : "smtp.mail.ru"
   port : 25
 
-# Доступ к сайту
-HTTPBasicAuthenticator:
-  username : "u1"
-  password : "111111"
-
 # Список адресов для тестирования
 urlTest:
   - hostapi: "localhost"
     http_protocol: "http"
+    # Доступ к сайту
+    HTTPBasicAuthenticator:
+      username : "u1"
+      password : "111111"
     url_params:
       - name: "Выдача информации по лицевому счёту"
         path: "wkvart/repa/ShowTip_out.php"

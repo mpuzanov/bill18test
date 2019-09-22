@@ -18,7 +18,7 @@ type EmailCredentials struct {
 }
 
 //SendEmail Отправка почтовых сообщений
-func SendEmail(addFrom, addTo, subject, bodyMessage, attachFiles string) {
+func SendEmail(addFrom, addTo, subject, bodyMessage, attachFiles string) error {
 
 	authCreds := EmailCredentials{
 		Username: cfg.SettingsSMTP.Username,
@@ -35,11 +35,11 @@ func SendEmail(addFrom, addTo, subject, bodyMessage, attachFiles string) {
 
 	if attachFiles != "" {
 		var splitsAttachFiles = strings.Split(attachFiles, ";")
-		//fmt.Printf("%q\n", splits)
+		//log.Printf("%q\n", splitsAttachFiles)
 		for _, file := range splitsAttachFiles {
 			// add attachments
 			if err := m.Attach(file); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		}
 	}
@@ -47,8 +47,10 @@ func SendEmail(addFrom, addTo, subject, bodyMessage, attachFiles string) {
 	// send it
 	auth := smtp.PlainAuth("", cfg.SettingsSMTP.Username, authCreds.Password, authCreds.Server)
 	if err := email.Send(authCreds.Server+":25", auth, m); err != nil {
-		log.Fatal(err)
-	} else {
-		log.Println("Email Sent!")
+		return err
 	}
+
+	log.Println("Email Sent!")
+	return nil
+
 }

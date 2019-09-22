@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"path"
 
 	"log"
 	"net/http"
@@ -27,7 +26,8 @@ var (
 	urlsResponse []models.URLResponseHistory
 	urls         models.UrlsTest
 	cfg          *Config
-	logger       *log.Logger
+	// Лог в файл
+	logger *log.Logger
 )
 
 //var impl = template.Must(template.ParseFiles("templates/history.html")) // для разбора шаблона 1 раз при запуске сервиса
@@ -40,7 +40,7 @@ func main() {
 	logFile, _ := os.OpenFile(logFileName, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
 	defer logFile.Close()
 	//logger = log.New(os.Stdout, "info ", log.LstdFlags|log.Lshortfile)
-	logger = log.New(logFile, "info ", log.LstdFlags|log.Lshortfile)
+	logger = log.New(logFile, "INFO: ", log.LstdFlags|log.Lshortfile)
 
 	if *configFileName == "" {
 		log.Fatal("Конфиг-файл не задан!")
@@ -78,24 +78,24 @@ func saveHistory(s models.URLResponseHistory) {
 
 // checkLoop функция проверки сайтов по заданному списку
 func checkLoop() {
-	var textToSendMail = "Ошибки тестирования сайтов: \n\n"
 	for {
-		isSendMail := false
+		var textToSendMail = "Ошибки тестирования сайтов: \n\n"
+		isErrorTest := false // Признак наличия ошибочного теста из группы
 		for _, url := range urlsTest {
-			res, objResponse := runCheck(url)
+			resTest, objResponse := runCheck(url)
 			msg := fmt.Sprintf("%s; %s; %v; %s; %s", objResponse.Name, objResponse.Site, objResponse.GetParamsJSON(), objResponse.Time, objResponse.Status)
 			logToFile(msg)
 			saveHistory(objResponse)
-			if res != true {
-				if isSendMail == false {
-					isSendMail = true
-				}
+			if !resTest {
+				isErrorTest = true
 				textToSendMail += msg + "\n" // добавляем в текст письма при ошибке
 			}
 		}
-		if isSendMail == true && cfg.ErrorSendEmail == true {
+		if isErrorTest && cfg.ErrorSendEmail {
 			log.Printf("Отправляем на адрес: %s сообщение: %s\n", cfg.ToEmail, textToSendMail)
-			SendEmail("bill18test", cfg.ToEmail, "Ошибка проверки сайтов", textToSendMail, "")
+			if err := SendEmail("bill18test", cfg.ToEmail, "Ошибка проверки сайтов", textToSendMail, ""); err != nil {
+				log.Println(err)
+			}
 		}
 
 		_, err := reloadConfig(*configFileName) // Считываем конфиг (вдруг добавили ещё сайты для проверки)
@@ -151,14 +151,13 @@ func reloadConfig(configName string) (cfg *Config, err error) {
 				u.Name = p.Name
 				u.Params = p.Params
 				u.Path = p.Path
-				u.Site = path.Join(url.HTTProtocol, url.Hostapi, p.Path)
-				u.URI = gerURLAndParams(url.HTTProtocol, url.Hostapi, p.Path, p.Params)
+				u.URI, u.Site = gerURLAndParams(url.HTTProtocol, url.Hostapi, p.Path, p.Params)
 				u.BasicAuth.Username = url.BasicAuth.Username
 				u.BasicAuth.Password = url.BasicAuth.Password
 				urlsTest = append(urlsTest, u)
 			}
 		}
-		//fmt.Println(urlsTest)
+		//log.Println(urlsTest)
 		return cfg, nil
 	}
 	logger.Println("Файл не изменился")
@@ -170,7 +169,7 @@ func reloadConfig(configName string) (cfg *Config, err error) {
 func runCheck(url models.UrlsTest) (bool, models.URLResponseHistory) {
 	// возвращает true — если сервис доступен, false, если нет и текст сообщения
 	tm := time.Now().Format("2006–01–02 15:04:05")
-	client := &http.Client{Timeout: time.Second * 10} // Создаём своего клиента
+	client := &http.Client{Timeout: time.Second * 15} // Создаём своего клиента
 
 	uri := url.URI
 	logger.Println("Адрес с учётом параметров: ", uri)
@@ -204,42 +203,19 @@ func basicAuth(username, password string) string {
 }
 
 // gerURLAndParams Формируем адрес сайта с параметрами
-func gerURLAndParams(HTTProtocol, hostapi, path string, paramsJSON map[string]string) string {
+func gerURLAndParams(HTTProtocol, hostapi, path string, paramsJSON map[string]string) (u, site string) {
 	params := url.Values{}
 	for key, value := range paramsJSON {
 		//log.Println("key : ", key, " value : ", value)
 		params.Add(key, value)
 	}
 	uri := &url.URL{
-		Scheme:   HTTProtocol,
-		Host:     hostapi,
-		Path:     path,
-		RawQuery: params.Encode(),
+		Scheme: HTTProtocol,
+		Host:   hostapi,
+		Path:   path,
 	}
-	//fmt.Println(uri.String())
-	return uri.String()
+	site = uri.String()
+	uri.RawQuery = params.Encode()
+	//log.Println(uri.String(), site)
+	return uri.String(), site
 }
-
-//func gerURLAndParams(reqURL string, paramsJSON string) string {
-// 	if paramsJSON == "" {
-// 		return reqURL
-// 	}
-// 	log.Println(reqURL)
-// 	log.Println(paramsJSON)
-// 	paramsJSON = strings.Replace(paramsJSON, "'", "\"", -1)
-// 	log.Println(paramsJSON)
-// 	keyValMap := make(map[string]interface{})
-// 	err := json.Unmarshal([]byte(paramsJSON), &keyValMap)
-// 	if err != nil {
-// 		log.Printf("Error: %q\n", err)
-// 	}
-// 	params := url.Values{}
-// 	for key, value := range keyValMap {
-// 		log.Println("key : ", key, " value : ", value)
-// 		params.Add(key, value.(string))
-// 	}
-// 	uri, _ := url.Parse(reqURL)
-// 	uri.RawQuery = params.Encode()
-// 	reqURL = uri.String()
-// 	return reqURL
-// }

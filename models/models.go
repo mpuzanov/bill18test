@@ -13,10 +13,12 @@ type HTTPBasicAuthenticator struct {
 
 //UrlsTest структура для тестирования сайтов
 type UrlsTest struct {
-	Name      string                 `yaml:"name"`
-	Site      string                 `yaml:"site,omitempty"`
-	Path      string                 `yaml:"path,omitempty"`
-	Params    map[string]string      `yaml:"params,omitempty"`
+	Name string `yaml:"name"`
+	// Сайт без параметров
+	Site   string            `yaml:"site,omitempty"`
+	Path   string            `yaml:"path,omitempty"`
+	Params map[string]string `yaml:"params,omitempty"`
+	// Сайт с параметрами
 	URI       string                 `yaml:"uri,omitempty"`
 	BasicAuth HTTPBasicAuthenticator `yaml:"HTTPBasicAuthenticator,omitempty"`
 }

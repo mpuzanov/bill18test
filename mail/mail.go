@@ -1,4 +1,4 @@
-package main
+package mail
 
 import (
 	"log"
@@ -6,21 +6,14 @@ import (
 	"net/smtp"
 	"strings"
 
+	"github.com/mpuzanov/bill18test/config"
 	"github.com/scorredoira/email"
 )
 
-//EmailCredentials Структура настройки сервера smtp
-type EmailCredentials struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Server   string `yaml:"server"`
-	Port     string `yaml:"port"`
-}
-
 //SendEmail Отправка почтовых сообщений
-func SendEmail(addFrom, addTo, subject, bodyMessage, attachFiles string) error {
+func SendEmail(cfg *config.Config, addFrom, addTo, subject, bodyMessage, attachFiles string) error {
 
-	authCreds := EmailCredentials{
+	authCreds := config.EmailCredentials{
 		Username: cfg.SettingsSMTP.Username,
 		Password: cfg.SettingsSMTP.Password,
 		Server:   cfg.SettingsSMTP.Server,

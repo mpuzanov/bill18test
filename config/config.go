@@ -1,14 +1,10 @@
-package main
+package config
 
 import (
 	"io/ioutil"
 
 	"github.com/go-yaml/yaml"
 	"github.com/mpuzanov/bill18test/models"
-)
-
-var (
-	configModtime int64
 )
 
 //URLParam ...
@@ -26,6 +22,14 @@ type UrlsTestConfig struct {
 	BasicAuth   models.HTTPBasicAuthenticator `yaml:"HTTPBasicAuthenticator,omitempty"`
 }
 
+//EmailCredentials Структура настройки сервера smtp
+type EmailCredentials struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Server   string `yaml:"server"`
+	Port     string `yaml:"port"`
+}
+
 // Config - структура для считывания конфигурационного файла
 type Config struct {
 	LogLevel       string           `yaml:"log_level"`
@@ -38,9 +42,8 @@ type Config struct {
 	SettingsSMTP   EmailCredentials `yaml:"settingsSMTP"`
 }
 
-// readConfig Читаем конфигурацию из файла
-func readConfig(configName string) (x *Config, err error) {
-	logger.Printf("Читаем конфигурацию из файла: %s\n", configName)
+//ReadConfig Читаем конфигурацию из файла
+func ReadConfig(configName string) (x *Config, err error) {
 	var file []byte
 	if file, err = ioutil.ReadFile(configName); err != nil {
 		return nil, err

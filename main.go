@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mpuzanov/bill18test/config"
+	"github.com/mpuzanov/bill18test/mail"
 	"github.com/mpuzanov/bill18test/models"
 )
 
@@ -22,17 +24,18 @@ const (
 )
 
 var (
-	urlsTest     []models.UrlsTest
-	urlsResponse []models.URLResponseHistory
-	urls         models.UrlsTest
-	cfg          *Config
+	urlsTest      []models.UrlsTest
+	urlsResponse  []models.URLResponseHistory
+	urls          models.UrlsTest
+	cfg           *config.Config
+	configModtime int64
 	// Лог в файл
 	logger *log.Logger
 )
 
 //var impl = template.Must(template.ParseFiles("templates/history.html")) // для разбора шаблона 1 раз при запуске сервиса
 
-var configFileName = flag.String("conf", "configs/config.yaml", "config filename")
+var configFileName = flag.String("conf", "config.yaml", "config filename")
 
 func main() {
 	flag.Parse()
@@ -83,7 +86,7 @@ func checkLoop() {
 		isErrorTest := false // Признак наличия ошибочного теста из группы
 		for _, url := range urlsTest {
 			resTest, objResponse := runCheck(url)
-			msg := fmt.Sprintf("%s; %s; %v; %s; %s", objResponse.Name, objResponse.Site, objResponse.GetParamsJSON(), objResponse.Time, objResponse.Status)
+			msg := fmt.Sprintf("%s; %s; %s; %s", objResponse.Name, objResponse.URI, objResponse.Time, objResponse.Status)
 			logToFile(msg)
 			saveHistory(objResponse)
 			if !resTest {
@@ -92,9 +95,9 @@ func checkLoop() {
 			}
 		}
 		if isErrorTest && cfg.ErrorSendEmail {
-			log.Printf("Отправляем на адрес: %s сообщение: %s\n", cfg.ToEmail, textToSendMail)
-			if err := SendEmail("bill18test", cfg.ToEmail, "Ошибка проверки сайтов", textToSendMail, ""); err != nil {
-				log.Println(err)
+			logger.Printf("Отправляем на адрес: %s сообщение:\n%s\n", cfg.ToEmail, textToSendMail)
+			if err := mail.SendEmail(cfg, "bill18test", cfg.ToEmail, "Ошибка проверки сайтов", textToSendMail, ""); err != nil {
+				logger.Println(err)
 			}
 		}
 
@@ -130,7 +133,7 @@ func checkErr(err error) {
 //Проверяет время изменения конфигурационного файла
 //и перезагружает его если он изменился
 //Возвращает errNotModified если изменений нет
-func reloadConfig(configName string) (cfg *Config, err error) {
+func reloadConfig(configName string) (cfg *config.Config, err error) {
 	logger.Printf("Проверяем конфигурационный файл: %s ", configName)
 	info, err := os.Stat(configName)
 	if err != nil {
@@ -138,7 +141,7 @@ func reloadConfig(configName string) (cfg *Config, err error) {
 	}
 	if configModtime != info.ModTime().UnixNano() {
 		configModtime = info.ModTime().UnixNano()
-		cfg, err = readConfig(configName)
+		cfg, err = config.ReadConfig(configName)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +165,7 @@ func reloadConfig(configName string) (cfg *Config, err error) {
 	}
 	logger.Println("Файл не изменился")
 
-	return nil, nil
+	return
 }
 
 // runCheck Проверяем сайт

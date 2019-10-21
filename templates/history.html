@@ -2,28 +2,35 @@
 
 <head>
     <title>Проверка веб-сайтов</title>
+    <link rel="stylesheet" href="static/css/styles.css">
 </head>
 
 <body>
-    <h1>История проверки сайтов</h1>
     <div>
-        <table border="1">
-            <tr>
-                <th>Описание теста</th>
-                <th>Сайт</th>
-                <th>Параметры</th>
-                <th>Время</th>
-                <th>Статус возврата</th>
-            </tr>
-            {{range . }}
-            <tr>
-                <td>{{.Name}}</td>
-                <td>{{.Site}}</td>
-                <td>{{.GetParamsJSON}}</td>
-                <td>{{.Time}}</td>
-                <td>{{.Status}}</td>
-            </tr>
-            {{end}}
+        <table>
+            <caption>
+                История проверки сайтов
+            </caption>
+            <thead>
+                <tr>
+                    <th>Описание теста</th>
+                    <th>Сайт</th>
+                    <th>Параметры</th>
+                    <th>Время</th>
+                    <th>Статус возврата</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range . }}
+                <tr>
+                    <td>{{.Name}}</td>
+                    <td><a href="{{.URI}}" target="_blank">{{.Site}}</a></td>
+                    <td>{{.GetParamsJSON}}</td>
+                    <td>{{.Time}}</td>
+                    <td>{{.Status}}</td>
+                </tr>
+                {{end}}
+            </tbody>
         </table>
 
     </div>

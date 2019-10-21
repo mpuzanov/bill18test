@@ -60,6 +60,10 @@ func main() {
 
 	go checkLoop() // Проверяем доступность сайтов
 
+	// static-files
+	fileServer := http.FileServer(http.Dir("./static/"))
+	http.Handle("/static/", http.StripPrefix("/static/", fileServer))
+
 	fmt.Printf("Listening on port :%d\n", cfg.Port)
 	http.HandleFunc("/", indexHandler)
 	logger.Fatal(http.ListenAndServe(":"+strconv.Itoa(cfg.Port), nil))

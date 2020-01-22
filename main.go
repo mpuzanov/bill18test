@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-
 	"log"
 	"net/http"
 	"net/url"
@@ -13,14 +12,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mpuzanov/bill18test/config"
-	"github.com/mpuzanov/bill18test/mail"
-	"github.com/mpuzanov/bill18test/models"
+	"github.com/mpuzanov/bill18test/internal/app/config"
+	"github.com/mpuzanov/bill18test/internal/app/mail"
+	"github.com/mpuzanov/bill18test/internal/app/models"
 )
 
 const (
-	statfile    = "web_check.log"
-	logFileName = "check.log"
+	statfile    = "logs/web_check.log"
+	logFileName = "logs/check.log"
 )
 
 var (
@@ -35,7 +34,7 @@ var (
 
 //var impl = template.Must(template.ParseFiles("templates/history.html")) // для разбора шаблона 1 раз при запуске сервиса
 
-var configFileName = flag.String("conf", "config.yaml", "config filename")
+var configFileName = flag.String("conf", "config.yml", "config filename")
 
 func main() {
 	flag.Parse()
@@ -61,7 +60,7 @@ func main() {
 	go checkLoop() // Проверяем доступность сайтов
 
 	// static-files
-	fileServer := http.FileServer(http.Dir("./static/"))
+	fileServer := http.FileServer(http.Dir("./public/static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fileServer))
 
 	fmt.Printf("Listening on port :%d\n", cfg.Port)
@@ -130,7 +129,7 @@ func logToFile(s string) {
 //checkErr функция обработки ошибок
 func checkErr(err error) {
 	if err != nil {
-		panic(err)
+		logger.Fatal(err)
 	}
 }
 

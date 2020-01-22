@@ -1,0 +1,64 @@
+# Уровень логирования
+log_level : "debug"
+# Минут между проверками
+timeout : 2
+# Порт веб-сервера для просмотра результатов проверки
+port : 8090
+# Сколько записей хранить в массиве с историей проверок
+histLength : 30
+# Признак отправки ошибок проверок на почту
+errorSendEmail: false
+# Email пользователя получения ошибок
+toEmail: "puzanovma@yandex.ru"
+
+# настройки SMTP-сервера для отправки писем
+settingsSMTP:
+  username : "username@mail.ru"
+  password : "111111"
+  server  : "smtp.mail.ru"
+  port : 25
+
+# Список адресов для тестирования
+urlTest:
+  - hostapi: "localhost"
+    http_protocol: "http"
+    # Доступ к сайту
+    HTTPBasicAuthenticator:
+      username : "u1"
+      password : "111111"
+    url_params:
+      - name: "Выдача информации по лицевому счёту"
+        path: "wkvart/repa/ShowTip_out.php"
+        params:
+          {"lic": "45321", "pro": "1", "kolval": "3"}
+      - name: "Выдача информации по лицевому счёту, которого НЕТ "
+        path: "wkvart/repa/ShowTip_out.php"
+        params:
+          {"lic": "9999", "pro": "1", "kolval": "3"}
+      - name: "Список улиц"
+        path: "wkvart/repa/ShowStreets.php"
+      - name: "Список домов по заданной улице"
+        path: "wkvart/repa/ShowBuilds.php"
+        params:
+          {"street_name": "1-я Донская ул."}
+      - name: "Список квартир по заданному адресу"
+        path: "wkvart/repa/ShowKvr.php"
+        params:
+          {"street_name": "1-я Донская ул.", "nom_dom": "6"}
+      - name: "Список лицевых счетов по адресу"
+        path: "wkvart/repa/ShowKvrLic.php"
+        params:
+          {"street_name": "1-я Донская ул.", "nom_dom": "6", "nom_kvr": "12"}
+
+  - hostapi: "ya.ru"
+    http_protocol: "http"
+    url_params:
+      - name: "Yandex"
+
+  - hostapi: "comp:8080"
+    http_protocol: "http"
+    url_params:
+      - name: "Выдача информации по лицевому счёту"
+        path: "wkvart/repa/ShowTip_out.php"
+        params:
+          {"lic": "45321", "pro": "1", "kolval": "3"}

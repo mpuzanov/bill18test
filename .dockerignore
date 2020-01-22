@@ -1,0 +1,7 @@
+.vscode
+release
+bin
+*.exe
+.log
+.bat
+.git

@@ -6,10 +6,16 @@
 *.dylib
 *.log
 *.yaml
+*.sum
 
 # Test binary, build with `go test -c`
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+*.tmp
 /.vscode/
+/release
+/bin
+
+go.sum

@@ -1,13 +1,12 @@
 package config
 
 import (
-	"io/ioutil"
-
-	"github.com/go-yaml/yaml"
 	"github.com/mpuzanov/bill18test/internal/app/models"
+	"gopkg.in/yaml.v3"
+	"os"
 )
 
-//URLParam ...
+// URLParam ...
 type URLParam struct {
 	Name   string            `yaml:"name,omitempty"`
 	Path   string            `yaml:"path,omitempty"`
@@ -22,7 +21,7 @@ type UrlsTestConfig struct {
 	BasicAuth   models.HTTPBasicAuthenticator `yaml:"HTTPBasicAuthenticator,omitempty"`
 }
 
-//EmailCredentials Структура настройки сервера smtp
+// EmailCredentials Структура настройки сервера smtp
 type EmailCredentials struct {
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
@@ -42,10 +41,10 @@ type Config struct {
 	SettingsSMTP   EmailCredentials `yaml:"settingsSMTP"`
 }
 
-//ReadConfig Читаем конфигурацию из файла
+// ReadConfig Читаем конфигурацию из файла
 func ReadConfig(configName string) (x *Config, err error) {
 	var file []byte
-	if file, err = ioutil.ReadFile(configName); err != nil {
+	if file, err = os.ReadFile(configName); err != nil {
 		return nil, err
 	}
 	x = new(Config)
